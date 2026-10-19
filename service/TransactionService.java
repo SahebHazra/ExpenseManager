@@ -1,6 +1,7 @@
 package service;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.Scanner;
 
 import model.*;
@@ -17,17 +18,17 @@ public class TransactionService {
     private String dateStr;
     private Scanner sc;
 
-    private BudgetService bgtService;
-    private static final SharedRuntimeResourceManager SRRM = new SharedRuntimeResourceManager();
+    // private BudgetService bgtService;
+    private static HashMap<Integer, Income> incomeTracker = new HashMap<>();
+    private static HashMap<Integer, Expense> expenseTracker = new HashMap<>();
 
     public TransactionService(Scanner scanner) {
         this.sc = scanner;
-        bgtService = new BudgetService(scanner);
     }
 
     private int getUniqueID() {
         ID = UniqueID.getID();
-        while (!(ID > 0) || SRRM.incomeTracker.containsKey(ID) || SRRM.expenseTracker.containsKey(ID))
+        while (!(ID > 0) || incomeTracker.containsKey(ID) || expenseTracker.containsKey(ID))
             ID = UniqueID.getID();
         return ID;
     }
@@ -37,11 +38,11 @@ public class TransactionService {
         System.out.print("Amount : ");
         this.amount = InputValidator.getValidDouble(sc);
         if (amount == 0) {
-            throw new InvalidAmountException("Can't Process this Ammount");
+            throw new InvalidAmountException("Can't ProCategoryExpenseServices this Ammount");
         }
         sc.nextLine();
         System.out.print("Notes : ");
-        this.note = SRRM.nullPointerHandler(sc.nextLine());
+        this.note = sc.nextLine();
         System.out.print("Date (yyyy-mm-dd) : ");
         this.dateStr = sc.nextLine();
         if (!DateUtil.isValidDate(dateStr)) {
@@ -52,38 +53,36 @@ public class TransactionService {
     public void addIncomeRecords() throws InvalidAmountException {
         takeInputs();
         System.out.print("Source : ");
-        this.source = SRRM.nullPointerHandler(sc.nextLine());
-        SRRM.incomeTracker.put(ID, new Income(ID, amount, source, dateStr, note));
+        this.source = sc.nextLine();
+        incomeTracker.put(ID, new Income(ID, amount, source, dateStr, note));
     }
 
-    private void categoryValidator() {
-
-        if (category.equalsIgnoreCase("N/A")) {
-            this.category = "Other";
-            return;
-        }
-
-        if (!Category.isExist(category)) {
-            System.out.println("This Category is not a vlid Category!");
+    private String categoryValidator(String category) {
+        if (NullPointerHandler.perform(category).equalsIgnoreCase("N/A"))
+            return "Other";
+        else if (!Category.isExist(category)) {
+            System.out.println("This Category is not a valid Category!");
             System.out.println("Wan'na make a new Category ? [y/n] : ");
             String respond = sc.next();
-            if (respond.equalsIgnoreCase("y"))
+            if (respond.equalsIgnoreCase("y")) {
                 Category.addCategory(category);
-            else {
+                return category;
+            } else {
                 System.out.println("Fall-back : 'Other' ");
-                this.category = "Other";
+                return "Other";
             }
         }
+        return category;
     }
 
     public void addExpenseRecords() throws InvalidAmountException {
         takeInputs();
-        System.out.println("Enter Category " + Category.getAllCategorys());
+        System.out.println("Avilable Category " + Category.getAllCategorys());
         System.out.print("Category : ");
-        this.category = SRRM.nullPointerHandler(sc.nextLine());
-        categoryValidator();
-        SRRM.expenseTracker.put(ID, new Expense(ID, amount, category, dateStr, note));
-        bgtService.updateIncrimentExpense(category, amount);
+        this.category = categoryValidator(sc.nextLine());
+        expenseTracker.put(ID, new Expense(ID, amount, category, dateStr, note));
+        CategoryExpenseService.incrimentCategoryExpense(category, amount);
+        // bgtService.updateIncrimentExpense(category, amount);
     }
 
     public void getIncomeRecords() {
@@ -101,44 +100,45 @@ public class TransactionService {
         getRecords(RecordType.MIXED);
     }
 
+    // Heavy Manupulations
     public void deleteRecordByID(int id) throws Exception {
         String recordRecordType = "Income";
-        if (SRRM.incomeTracker.containsKey(id))
-            SRRM.incomeTracker.remove(id);
-        else if (SRRM.expenseTracker.containsKey(id)) {
+        if (incomeTracker.containsKey(id))
+            incomeTracker.remove(id);
+        else if (expenseTracker.containsKey(id)) {
             recordRecordType = "Expense";
-            Expense record = SRRM.expenseTracker.get(id);
-            // Adjust either the active budget expense or the deletedCategory cache
-            bgtService.adjustDeletedOrExistingExpense(record.getCategory(), record.getAmount());
-            SRRM.expenseTracker.remove(id);
+            Expense record = expenseTracker.get(id);
+            CategoryExpenseService.decrimentCategoryExpense(record.getCategory(), record.getAmount());
+            expenseTracker.remove(id);
         } else {
             System.out.println("The id " + id + " is not match");
             return;
         }
-        System.out.println("Record has been deleted sucessfully, from " + recordRecordType);
+        System.out.println("Record has been deleted suCategoryExpenseServicesfully, from " + recordRecordType);
     }
 
     private void getRecords(RecordType recTyp) {
-        if (recTyp == RecordType.INCOME && SRRM.incomeTracker.isEmpty()) {
+        if (recTyp == RecordType.INCOME && incomeTracker.isEmpty()) {
             System.out.println("Income Records Not Found!");
             return;
-        } else if (recTyp == RecordType.EXPENSE && SRRM.expenseTracker.isEmpty()) {
+        } else if (recTyp == RecordType.EXPENSE && expenseTracker.isEmpty()) {
             System.out.println("Expense Records Not Found!");
             return;
-        } else if (SRRM.incomeTracker.isEmpty() && SRRM.expenseTracker.isEmpty()) {
+        } else if (incomeTracker.isEmpty()
+                && expenseTracker.isEmpty()) {
             System.out.println("Records Not Found!");
             return;
         }
         System.out.println(" ID       DATE         RecordType      AMOUNT    CATEGORY/SOURCE");
         System.out.println("------------------------------------------------------");
         if (recTyp == RecordType.INCOME || recTyp == RecordType.MIXED) {
-            for (Income TRI : SRRM.incomeTracker.values()) {
+            for (Income TRI : incomeTracker.values()) {
                 System.out.print(TRI.getID() + "   " + TRI.getDate() + "   " + RecordType.INCOME);
                 System.out.println("    " + TRI.getAmount() + "    " + TRI.getSource());
             }
         }
         if (recTyp == RecordType.EXPENSE || recTyp == RecordType.MIXED) {
-            for (Expense TRE : SRRM.expenseTracker.values()) {
+            for (Expense TRE : expenseTracker.values()) {
                 System.out.print(TRE.getID() + "   " + TRE.getDate() + "   " + RecordType.EXPENSE);
                 System.out.println("    " + TRE.getAmount() + "    " + TRE.getCategory());
             }
@@ -148,18 +148,19 @@ public class TransactionService {
 
     public static void searchDetailsByID(int id) {
 
-        if (!SRRM.incomeTracker.containsKey(id) && !SRRM.expenseTracker.containsKey(id)) {
+        if (!incomeTracker.containsKey(id)
+                && !expenseTracker.containsKey(id)) {
             System.out.println("ID not Match!");
             return;
         }
-        if (SRRM.incomeTracker.containsKey(id)) {
-            Income record = SRRM.incomeTracker.get(id);
+        if (incomeTracker.containsKey(id)) {
+            Income record = incomeTracker.get(id);
             System.out.println(
                     "\t" + id + "   " + record.getDate() + "   INCOME    " + record.getAmount() + "    "
                             + record.getSource() + "    Note: " + record.getNote());
         }
-        if (SRRM.expenseTracker.containsKey(id)) {
-            Expense record = SRRM.expenseTracker.get(id);
+        if (expenseTracker.containsKey(id)) {
+            Expense record = expenseTracker.get(id);
             System.out.println(
                     "\t" + id + "   " + record.getDate() + "   EXPENSE    " + record.getAmount() + "    "
                             + record.getCategory() + "    Note: " + record.getNote());
@@ -187,14 +188,14 @@ public class TransactionService {
                 this.dateStr = LocalDate.now().toString();
         } else if (option == 3) {
             System.out.print("Note : ");
-            this.note = SRRM.nullPointerHandler(sc.nextLine());
+            this.note = sc.nextLine();
         } else if (option == 4 && recTyp == RecordType.INCOME) {
             System.out.print("Source : ");
-            this.source = SRRM.nullPointerHandler(sc.nextLine());
+            this.source = sc.nextLine();
         } else if (option == 4 && recTyp == RecordType.EXPENSE) {
             System.out.println("Enter Category " + Category.getAllCategorys());
             System.out.print("Category : ");
-            this.category = SRRM.nullPointerHandler(sc.nextLine());
+            this.category = categoryValidator(sc.nextLine());
         } else {
             System.out.println("Operation Canceld!");
         }
@@ -204,49 +205,60 @@ public class TransactionService {
 
     public void editReordByID(int id) throws InvalidAmountException {
 
-        if (SRRM.incomeTracker.containsKey(id)) {
+        if (incomeTracker.containsKey(id)) {
             int option = filedToEdit(RecordType.INCOME);
             if (option == 1)
-                SRRM.incomeTracker.get(id).setAmount(amount);
+                incomeTracker.get(id).setAmount(amount);
             else if (option == 2)
-                SRRM.incomeTracker.get(id).setDate(dateStr);
+                incomeTracker.get(id).setDate(dateStr);
             else if (option == 3)
-                SRRM.incomeTracker.get(id).setNote(note);
+                incomeTracker.get(id).setNote(note);
             else if (option == 4)
-                SRRM.incomeTracker.get(id).setSource(source);
+                incomeTracker.get(id).setSource(source);
             else
                 return;
-        } else if (SRRM.expenseTracker.containsKey(id)) {
+        } else if (expenseTracker.containsKey(id)) {
             int option = filedToEdit(RecordType.EXPENSE);
             if (option == 1) {
-                Expense record = SRRM.expenseTracker.get(id);
+                Expense record = expenseTracker.get(id);
 
-                if (amount >= 0) {
-                    System.out.println("Expense amount must be negative!");
+                if (amount == 0) {
+                    System.out.println("Zero not allow for edit!");
+                    System.out.println("Consider to Delete the record");
                     return;
                 }
+                amount = Math.abs(amount) * -1;
 
                 double adjustableAmount = amount - record.getAmount();
                 String recordCategory = record.getCategory();
-                double newCategoryExpense = bgtService.getCategoryExpense(recordCategory) + adjustableAmount;
-
+                CategoryExpenseService.incrimentCategoryExpense(recordCategory, adjustableAmount); // auto
+                                                                                                   // incriment/decriment
                 record.setAmount(amount);
-                bgtService.updateChangeExpense(recordCategory, newCategoryExpense);
             } else if (option == 2)
-                SRRM.expenseTracker.get(id).setDate(dateStr);
+                expenseTracker.get(id).setDate(dateStr);
             else if (option == 3)
-                SRRM.expenseTracker.get(id).setNote(note);
+                expenseTracker.get(id).setNote(note);
             else if (option == 4) {
-                categoryValidator();
-                SRRM.expenseTracker.get(id).setCategory(category);
+                Expense record = expenseTracker.get(id);
+                CategoryExpenseService.adjustBetweenCategory(record.getCategory(), category, record.getAmount());
+                record.setCategory(category);
             } else
                 return;
         } else {
             System.out.println("ID not match!");
             return;
         }
-        System.out.println("ID " + id + " is Edited Sucessfully!");
+        System.out.println("ID " + id + " is Edited SuCategoryExpenseServicesfully!");
 
         searchDetailsByID(id);
     }
+
+    static HashMap<Integer, Income> getAllIncomeRecords() {
+        return incomeTracker;
+    }
+
+    static HashMap<Integer, Expense> getAllExpenseRecords() {
+        return expenseTracker;
+    }
+
 }

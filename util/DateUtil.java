@@ -16,7 +16,7 @@ public class DateUtil {
     }
 
     public static boolean isValidDateV2(String dateStr) {
-        if (dateStr.length() != 9)
+        if (dateStr.length() != 10 || dateStr.charAt(4) != '-' || dateStr.charAt(7) != '-')
             return false;
         Integer year = Integer.valueOf(dateStr.substring(0, 4));
         Integer month = Integer.valueOf(dateStr.substring(5, 7));

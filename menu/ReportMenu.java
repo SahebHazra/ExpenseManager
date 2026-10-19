@@ -14,11 +14,12 @@ public class ReportMenu {
     }
 
     public static void implementation(Scanner sc) throws Exception {
+        ReportService repoServ = new ReportService();
         while (true) {
             System.out.print("\nChoose: ");
             int option = InputValidator.getValidInt(sc);
             if (option == 1) {
-                ReportService.generateReport();
+                repoServ.generateReport();
             } else if (option == 5) {
                 System.out.println("Back to Main-Menu!");
                 return;

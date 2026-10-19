@@ -1,7 +1,0 @@
-public class NullPointerHandler{
-        public String perform(String field) {
-        if (field == null || field.isEmpty())
-            return "N/A";
-        return field;
-    }
-}

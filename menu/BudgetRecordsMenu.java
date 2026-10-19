@@ -9,7 +9,7 @@ public class BudgetRecordsMenu {
     public static void showMenu() {
         System.out.println("\n=========== Budget MENU ===========");
         System.out.println("1 : Set Budget Category");
-        System.out.println("2 : Show Budget Of A Category");
+        System.out.println("2 : Show Budget Of a Category");
         System.out.println("3 : Show All Category's Budget");
         System.out.println("4 : Update & Change Category's  Budget");
         System.out.println("5 : Show Expense By Category");
@@ -44,7 +44,7 @@ public class BudgetRecordsMenu {
                 budget = InputValidator.getValidDouble(sc);
                 BGTS.updateChangeBudget(category, budget);
             } else if (option == 5) {
-                BGTS.showExpenseByCategory();
+                BudgetService.showAllCategoryExpense();
             } else if (option == 6) {
                 System.out.print("Category : ");
                 category = sc.nextLine();
@@ -53,7 +53,7 @@ public class BudgetRecordsMenu {
                 System.out.println("Back to Main-Menu!");
                 return;
             } else
-                System.out.println("Invalid option, Enter between [1-6]");
+                System.out.println("Invalid option, Enter between [1-7]");
             showMenu();
         }
     }

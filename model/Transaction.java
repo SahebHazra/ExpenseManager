@@ -1,6 +1,7 @@
 package model;
 import java.time.LocalDate;
 import util.InvalidAmountException;
+import util.NullPointerHandler;
 
 abstract public class Transaction {
     private int ID;
@@ -28,7 +29,7 @@ abstract public class Transaction {
     }
 
     public void setNote(String note) {
-        this.note = note;
+        this.note = NullPointerHandler.perform(note);
     }
 
     // Geaters

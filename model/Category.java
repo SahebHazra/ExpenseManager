@@ -24,32 +24,4 @@ abstract public class Category {
     public static HashSet<String> getAllCategorys() {
         return types;
     }
-    // private static boolean isCriticalCatagory(String category) {
-    // if (category.equalsIgnoreCase("Other"))
-    // return true;
-    // return false;
-    // }
-
-    // public static void removeCategory(String category) {
-    // if (isCriticalCatagory(category)) {
-    // return;
-    // }
-    // if (isExist(category)) {
-    // types.remove(category);
-    // System.out.println("Catagory removed");
-    // }
-    // }
-
-    // public static void renameCategory(String oldCategory, String newCategory) {
-    // if (isCriticalCatagory(oldCategory)) {
-    // return;
-    // } else if (oldCategory.equals(newCategory)) {
-    // return;
-    // }
-    // if (isExist(newCategory)) {
-    // removeCategory(oldCategory);
-    // addCategory(newCategory);
-    // }
-    // }
-
 }

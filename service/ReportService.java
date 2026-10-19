@@ -4,19 +4,18 @@ import model.Expense;
 import model.Income;
 
 public class ReportService {
-    private static int incomeCount;
-    private static int expenseCount;
-    private static int highestIncomeId;
-    private static int highestExpenseId;
+    private int incomeCount;
+    private int expenseCount;
+    private int highestIncomeId;
+    private int highestExpenseId;
 
-    public static double getTotalIncomeAmount() {
+    public double getTotalIncomeAmount() {
         double totalIncome = 0;
-        double highestAmount = 0;
-        double currentAmount;
         for (Income income : TransactionService.getAllIncomeRecords().values()) {
-            currentAmount = income.getAmount();
-            if (highestAmount <= currentAmount) {
-                highestAmount = currentAmount;
+            double lastAmount = 0;
+            double currentAmount = income.getAmount();
+            if (lastAmount <= currentAmount) {
+                lastAmount = currentAmount;
                 highestIncomeId = income.getID();
             }
             totalIncome += currentAmount;
@@ -25,14 +24,13 @@ public class ReportService {
         return totalIncome;
     }
 
-    public static double getTotalExpenseAmount() {
+    public double getTotalExpenseAmount() {
         double totalExpense = 0;
-        double highestExpense = 0;
-        double currentAmount;
         for (Expense expense : TransactionService.getAllExpenseRecords().values()) {
-            currentAmount = expense.getAmount();
-            if (highestExpense >= currentAmount) {
-                highestExpense = currentAmount;
+            double lastAmount = 0;
+            double currentAmount = expense.getAmount();
+            if (lastAmount >= currentAmount) {
+                lastAmount = currentAmount;
                 highestExpenseId = expense.getID();
             }
             totalExpense += expense.getAmount();
@@ -41,33 +39,37 @@ public class ReportService {
         return totalExpense;
     }
 
-    private static void showHighestIncomeDetails() {
+    private void showHighestIncomeDetails() {
         TransactionService.searchDetailsByID(highestIncomeId);
     }
 
-    private static void showHighestExpenseDetails() {
+    private void showHighestExpenseDetails() {
         TransactionService.searchDetailsByID(highestExpenseId);
     }
 
-    public static void generateReport() {
+    public void generateReport() {
         double income = getTotalIncomeAmount();
         double expense = getTotalExpenseAmount();
         if (income <= 0 && expense >= 0) {
             System.out.println("There were no record");
             return;
         }
-        System.out.println("------------------------------------------");
-        System.out.println("| Total Income        ->     " + income + "   |");
-        System.out.println("| Total Expence       ->    " + expense + "   |");
-        System.out.println("------------------------------------------");
-        System.out.println("| Calculated Balance  ->    " + (income + expense) + "   |");
-        System.out.println("------------------------------------------");
-
-        System.out.println();
-        System.out.println("Highest Income : ");
-        showHighestIncomeDetails();
-        System.out.println("Highest Expense : ");
-        showHighestExpenseDetails();
+        if (income <= 0 || expense >= 0) {
+            System.out.println("\n------------------------------------------");
+            System.out.println("| Total Income        ->     " + income + "   |");
+            System.out.println("| Total Expence       ->    " + expense + "   |");
+            System.out.println("------------------------------------------");
+            System.out.println("| Calculated Balance  ->    " + (income + expense) + "   |");
+            System.out.println("------------------------------------------\n");
+        }
+        if (income > 0) {
+            System.out.println("Highest Income : ");
+            showHighestIncomeDetails();
+        }
+        if (expense < 0) {
+            System.out.println("Highest Expense : ");
+            showHighestExpenseDetails();
+        }
 
         System.out.println();
         System.out.println("Transactions: ");

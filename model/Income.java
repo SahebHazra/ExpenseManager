@@ -1,6 +1,7 @@
 package model;
 
 import util.InvalidAmountException;
+import util.NullPointerHandler;
 
 public class Income extends Transaction {
 
@@ -20,7 +21,7 @@ public class Income extends Transaction {
     }
 
     public void setSource(String source) {
-        this.source = source;
+        this.source = NullPointerHandler.perform(source);
     }
 
     public String getSource() {

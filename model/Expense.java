@@ -1,6 +1,7 @@
 package model;
 
 import util.InvalidAmountException;
+import util.NullPointerHandler;
 
 public class Expense extends Transaction {
 
@@ -19,7 +20,7 @@ public class Expense extends Transaction {
     }
 
     public void setCategory(String category) {
-        this.category = category;
+        this.category = NullPointerHandler.perform(category);
     }
 
     public String getCategory() {

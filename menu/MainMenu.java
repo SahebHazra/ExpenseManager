@@ -53,7 +53,7 @@ public class MainMenu {
             isEnd = true;
             return;
         } else
-            System.out.println("Please Enter between [1-5]");
+            System.out.println("Please Enter between [1-6]");
     }
 
 }
