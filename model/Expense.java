@@ -14,8 +14,8 @@ public class Expense extends Transaction {
 
     @Override
     boolean isValidAmount(double amount) throws InvalidAmountException {
-        if (amount >= 0)
-            throw new InvalidAmountException("Expenses Should in Negative");
+        if (amount <= 0)
+            throw new InvalidAmountException("Expense amount must be positive");
         return true;
     }
 

@@ -28,14 +28,13 @@ public class ReportService {
     public static double getTotalExpenseAmount() {
         double totalExpense = 0;
         double highestExpense = 0;
-        double currentAmount;
         for (Expense expense : TransactionService.getAllExpenseRecords().values()) {
-            currentAmount = expense.getAmount();
-            if (highestExpense >= currentAmount) {
+            double currentAmount = expense.getAmount();
+            if (currentAmount >= highestExpense) {
                 highestExpense = currentAmount;
                 highestExpenseId = expense.getID();
             }
-            totalExpense += expense.getAmount();
+            totalExpense += currentAmount;
             expenseCount++;
         }
         return totalExpense;
@@ -52,7 +51,7 @@ public class ReportService {
     public static void generateReport() {
         double income = getTotalIncomeAmount();
         double expense = getTotalExpenseAmount();
-        if (income <= 0 && expense >= 0) {
+        if (income == 0 && expense == 0) {
             System.out.println("There were no record");
             return;
         }
@@ -60,7 +59,7 @@ public class ReportService {
         System.out.println("| Total Income        ->     " + income + "   |");
         System.out.println("| Total Expence       ->    " + expense + "   |");
         System.out.println("------------------------------------------");
-        System.out.println("| Calculated Balance  ->    " + (income + expense) + "   |");
+        System.out.println("| Calculated Balance  ->    " + (income - expense) + "   |");
         System.out.println("------------------------------------------");
 
         System.out.println();

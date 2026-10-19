@@ -50,6 +50,12 @@ public class MainMenu {
             ReportMenu.implementation(sc);
         } else if (option == 6) {
             System.out.println("See you next time!");
+            // persist data before exit
+            try {
+                TRS.saveAll();
+            } catch (Exception e) {
+                System.out.println("Error saving data: " + e.getMessage());
+            }
             isEnd = true;
             return;
         } else

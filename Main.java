@@ -14,7 +14,6 @@ public class Main {
                 MainMenu.implementation(sc);
             } catch (InvalidAmountException e) {
                 System.out.println(e);
-                e.printStackTrace();
             } catch (Exception e) {
                 System.out.println(e);
                 sc.nextLine();

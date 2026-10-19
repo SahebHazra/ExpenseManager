@@ -6,6 +6,7 @@ import java.util.Scanner;
 
 import model.*;
 import util.*;
+import storage.FileStorage;
 
 enum Type {
     INCOME, EXPENSE, MIXED;
@@ -25,6 +26,8 @@ public class TransactionService {
     public TransactionService(Scanner scanner) {
         this.sc = scanner;
         bgtService = new BudgetService(scanner);
+        // Load persisted transactions (if any)
+        FileStorage.loadTransactions(incomeTracker, expenseTracker);
     }
 
     private int getUniqueID() {
@@ -60,7 +63,7 @@ public class TransactionService {
 
     private void categoryValidator() {
 
-        if (category.isEmpty() || category.equals(null)) {
+        if (category == null || category.isBlank()) {
             this.category = "Other";
             return;
         }
@@ -82,8 +85,13 @@ public class TransactionService {
         System.out.print("Category : ");
         this.category = sc.nextLine();
         categoryValidator();
+        // Store expense amounts as positive totals
         expenseTracker.put(ID, new Expense(ID, amount, category, dateStr, note));
         bgtService.updateIncrimentExpense(category, amount);
+    }
+
+    public void saveAll() {
+        FileStorage.saveTransactions(incomeTracker, expenseTracker);
     }
 
     public void getIncomeRecords() {
@@ -230,9 +238,8 @@ public class TransactionService {
             int option = filedToEdit(Type.EXPENSE);
             if (option == 1) {
                 Expense record = expenseTracker.get(id);
-
-                if (amount >= 0) {
-                    System.out.println("Expense amount must be negative!");
+                if (amount <= 0) {
+                    System.out.println("Expense amount must be positive!");
                     return;
                 }
 
