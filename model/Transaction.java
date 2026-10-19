@@ -1,5 +1,4 @@
 package model;
-
 import java.time.LocalDate;
 import util.InvalidAmountException;
 
@@ -20,12 +19,8 @@ abstract public class Transaction {
     private void setID(int ID) {
         this.ID = ID;
     }
-
-    abstract boolean isValidAmount(double amount) throws InvalidAmountException;
-
     public void setAmount(double amount) throws InvalidAmountException {
-        if (isValidAmount(amount))
-            this.amount = amount;
+        this.amount = amount;
     }
 
     public void setDate(String date) {
@@ -33,8 +28,6 @@ abstract public class Transaction {
     }
 
     public void setNote(String note) {
-        if (note == null || note.isEmpty())
-            note = "------";
         this.note = note;
     }
 

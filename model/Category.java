@@ -9,23 +9,20 @@ abstract public class Category {
             "Shopping", "Shopping", "Bills", "Health", "Technology", "Other"));
 
     public static boolean isExist(String category) {
-        return types.contains(category);
+        if (types.contains(category))
+            return true;
+        return false;
     }
 
     public static void addCategory(String category) {
         if (!isExist(category)) {
             types.add(category);
-            storage.FileStorage.saveCategory(category);
-            System.out.println("Category Added");
+            System.out.println("Catagory Added");
         }
     }
 
     public static HashSet<String> getAllCategorys() {
         return types;
-    }
-
-    public static void setCategories(HashSet<String> newTypes) {
-        types = new HashSet<>(newTypes);
     }
     // private static boolean isCriticalCatagory(String category) {
     // if (category.equalsIgnoreCase("Other"))

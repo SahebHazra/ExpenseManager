@@ -16,27 +16,14 @@ public class BudgetService {
 
     public BudgetService(Scanner scanner) {
         sc = scanner;
-        DEFAULT_EXPENSE_FOR_BUDGET = 0.0;
-        // Load persisted categories and budgets
-        try {
-            var cats = storage.FileStorage.loadCategories();
-            if (cats != null && !cats.isEmpty())
-                model.Category.setCategories(new java.util.HashSet<>(cats));
-            var persisted = storage.FileStorage.loadBudgets();
-            if (persisted != null && !persisted.isEmpty()) {
-                for (var e : persisted.entrySet()) {
-                    categoryBudget.put(e.getKey(), e.getValue());
-                }
-            }
-        } catch (Exception e) {
-            // ignore load errors
-        }
+        DEFAULT_EXPENSE_FOR_BUDGET = -0.00001;
     }
 
     // Category & Budget
     public boolean isCategoryExistInBudget(String category) {
         return categoryBudget.containsKey(category);
     }
+
 
     public double getCategoryExpense(String category) {
         return categoryBudget.get(category).getExpenseAmount();
@@ -69,36 +56,32 @@ public class BudgetService {
                 expense += deletedCategory.get(category);
                 deletedCategory.remove(category);
             }
-            if (expense < 0)
-                expense = 0.0;
             categoryBudget.put(category, new Budget(budget, expense));
-            storage.FileStorage.saveOrUpdateBudget(category, budget, expense);
-            System.out.println("The category : '" + category + "' is Initialized");
+            System.out.println("The category : \'" + category + "\' is Initialized");
         }
     }
 
     public void updateChangeExpense(String category, double expense) throws InvalidAmountException {
         if (!isCategoryExistInBudget(category)) {
-            double amount = 100;
-            setBudgetCategory(category, amount, Math.max(0.0, expense));
+            double amount = (expense >= 0) ? 100 : -(expense + expense);
+            setBudgetCategory(category, amount, expense);
         } else {
+            if (expense == 0)
+                expense = DEFAULT_EXPENSE_FOR_BUDGET;
             if (expense < 0)
-                expense = 0.0;
-            categoryBudget.get(category).setExpenseAmount(expense);
-            storage.FileStorage.saveOrUpdateBudget(category, getCategoryBGT(category), expense);
+                categoryBudget.get(category).setExpenseAmount(expense);
         }
     }
 
     public void updateIncrimentExpense(String category, double expense) throws InvalidAmountException {
         if (!isCategoryExistInBudget(category)) {
-            double amount = 100;
-            setBudgetCategory(category, amount, Math.max(0.0, expense));
+            double amount = (expense >= 0) ? 100 : -(expense + expense);
+            setBudgetCategory(category, amount, expense);
         } else {
-            if (expense > 0) {
+            if (expense < 0) {
                 double oldExpense = getCategoryExpense(category);
-                double bgtExpense = oldExpense + expense;
+                double bgtExpense = (oldExpense == DEFAULT_EXPENSE_FOR_BUDGET) ? expense : oldExpense + expense;
                 categoryBudget.get(category).setExpenseAmount(bgtExpense);
-                storage.FileStorage.saveOrUpdateBudget(category, getCategoryBGT(category), bgtExpense);
             }
         }
     }
@@ -112,7 +95,6 @@ public class BudgetService {
             setBudgetCategory(category, newBudget, DEFAULT_EXPENSE_FOR_BUDGET);
         else if (isCategoryExistInBudget(category) && getCategoryBGT(category) != newBudget) {
             categoryBudget.get(category).setBudgetAmount(newBudget);
-            storage.FileStorage.saveOrUpdateBudget(category, newBudget, getCategoryExpense(category));
         }
     }
 
@@ -124,9 +106,9 @@ public class BudgetService {
     }
 
     private void showBugetExpenceRelationShip(double bgtAmount, double bgtExpense) {
-        double result = bgtAmount - bgtExpense;
+        double result = bgtAmount + bgtExpense;
         if (result >= 0)
-            System.out.print(" |  Remaining : ");
+            System.out.print(" |  Remaning : ");
         else
             System.out.print(" |  Exceed with : ");
         result = Math.round(result * 1000.0f) / 1000.0f;
@@ -169,12 +151,10 @@ public class BudgetService {
     public void removeBudgetCategory(String category) {
         if (isCategoryExistInBudget(category)) {
             double expense = categoryBudget.get(category).getExpenseAmount();
-            if (expense > 0)
+            if (expense != DEFAULT_EXPENSE_FOR_BUDGET)
                 deletedCategory.put(category, expense);
             // if (expense == DEFAULT_EXPENSE_FOR_BUDGET){
             categoryBudget.remove(category);
-            storage.FileStorage.deleteBudget(category);
-            storage.FileStorage.deleteCategory(category);
             // }
             System.out.println("Category " + category + " is removed");
         } else
@@ -182,10 +162,8 @@ public class BudgetService {
     }
 
     private float getBudgetExpenseRelationInPersenteg(double budgetAmount, double expenseAmount) {
-        if (budgetAmount == 0)
-            return 0f;
-        float ret = (float) (expenseAmount / budgetAmount) * 100f;
-        float finalVal = Math.abs(ret);
+        float ret = (float) (expenseAmount / budgetAmount) * 100;
+        float finalVal = (ret < 0) ? -ret : ret;
         return Math.round(finalVal * 1000.0f) / 1000.0f;
     }
 
@@ -207,13 +185,11 @@ public class BudgetService {
     public void adjustDeletedOrExistingExpense(String category, double expenseAmount) throws InvalidAmountException {
         if (isCategoryExistInBudget(category)) {
             double newExpense = getCategoryExpense(category) - expenseAmount;
-            if (newExpense < 0)
-                newExpense = 0;
             updateChangeExpense(category, newExpense);
         } else if (deletedCategory.containsKey(category)) {
             double currentDeleted = deletedCategory.get(category);
             double newDeleted = currentDeleted - expenseAmount;
-            if (newDeleted <= 0) {
+            if (newDeleted == 0 || newDeleted >= 0) {
                 deletedCategory.remove(category);
             } else {
                 deletedCategory.put(category, newDeleted);

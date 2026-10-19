@@ -1,4 +1,5 @@
 package model;
+
 import util.InvalidAmountException;
 
 public class Income extends Transaction {
@@ -11,17 +12,14 @@ public class Income extends Transaction {
         setSource(source);
     }
 
-    // Method
     @Override
-    boolean isValidAmount(double amount) throws InvalidAmountException {
+    public void setAmount(double amount) throws InvalidAmountException {
         if (amount <= 0)
             throw new InvalidAmountException("Income Should in Positive");
-        return true;
+        super.setAmount(amount);
     }
 
     public void setSource(String source) {
-        if (source == null || source.isEmpty())
-            source = "------";
         this.source = source;
     }
 

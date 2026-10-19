@@ -2,6 +2,9 @@ import menu.*;
 import java.util.Scanner;
 import util.InvalidAmountException;
 
+// TODO
+// Expense value input - positive insted negative
+
 
 
 public class Main {
@@ -14,6 +17,7 @@ public class Main {
                 MainMenu.implementation(sc);
             } catch (InvalidAmountException e) {
                 System.out.println(e);
+                e.printStackTrace();
             } catch (Exception e) {
                 System.out.println(e);
                 sc.nextLine();

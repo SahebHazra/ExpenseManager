@@ -13,10 +13,9 @@ public class Expense extends Transaction {
     }
 
     @Override
-    boolean isValidAmount(double amount) throws InvalidAmountException {
-        if (amount <= 0)
-            throw new InvalidAmountException("Expense amount must be positive");
-        return true;
+    public void setAmount(double amount) throws InvalidAmountException {
+        amount = Math.abs(amount) * -1; // Ensure the amount is negative
+        super.setAmount(amount);
     }
 
     public void setCategory(String category) {

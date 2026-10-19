@@ -19,8 +19,8 @@ public class Budget {
     }
 
     public void setExpenseAmount(double expenseAmount) throws InvalidAmountException {
-        if (expenseAmount < 0)
-            throw new InvalidAmountException("Expense amount must be non-negative");
+        if (expenseAmount >= 0)
+            throw new InvalidAmountException("Expense are evaluate at Negative");
         this.expenseAmount = expenseAmount;
     }
 
