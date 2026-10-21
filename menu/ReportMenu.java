@@ -13,7 +13,7 @@ public class ReportMenu {
         System.out.println("5 : Back");
     }
 
-    public static void implementation(Scanner sc) throws Exception {
+    public static void implementation(Scanner sc)  {
         ReportService repoServ = new ReportService();
         while (true) {
             System.out.print("\nChoose: ");

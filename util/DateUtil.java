@@ -10,7 +10,7 @@ public class DateUtil {
             LocalDate.parse(dateStr);
             return true;
         } catch (DateTimeParseException e) {
-            System.out.println("Invalid Date");
+            System.out.print("Invalid Date");
         }
         return false;
     }
@@ -21,6 +21,7 @@ public class DateUtil {
         Integer year = Integer.valueOf(dateStr.substring(0, 4));
         Integer month = Integer.valueOf(dateStr.substring(5, 7));
         Integer day = Integer.valueOf(dateStr.substring(8, dateStr.length() - 1));
+        // Check if the date is valid or not | Highest year is 10 years from now and lowest year is 100 years from now
         if (year > LocalDate.now().getYear() + 10 || month > 12 || day > 31)
             return false;
         if (year < LocalDate.now().getYear() - 100 || month < 1 || day < 1)
@@ -40,4 +41,5 @@ public class DateUtil {
 
         return false;
     }
+
 }

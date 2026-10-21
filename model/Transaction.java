@@ -1,5 +1,8 @@
 package model;
+
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+
 import util.InvalidAmountException;
 import util.NullPointerHandler;
 
@@ -20,12 +23,21 @@ abstract public class Transaction {
     private void setID(int ID) {
         this.ID = ID;
     }
+
     public void setAmount(double amount) throws InvalidAmountException {
+        if (amount == 0)
+            throw new InvalidAmountException("Amount Should not be Zero");
         this.amount = amount;
     }
 
     public void setDate(String date) {
-        this.date = LocalDate.parse(date);
+        // If the date is invalid bychance , set it to the current date
+        try {
+            this.date = LocalDate.parse(date);
+        } catch (DateTimeParseException e) {
+            this.date = LocalDate.now();
+        }
+
     }
 
     public void setNote(String note) {

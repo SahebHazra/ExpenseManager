@@ -7,9 +7,16 @@ import java.util.Scanner;
 import model.*;
 import util.*;
 
+// Enum to represent the type of record: INCOME, EXPENSE, or MIXED
 enum RecordType {
     INCOME, EXPENSE, MIXED;
 }
+
+// TransactionService is a class that manages income and expense records. It
+// provides methods to add, retrieve, edit, and delete records. The class uses
+// HashMaps to store income and expense records, with unique IDs as keys. It
+// also includes methods for validating input, handling categories, and
+// displaying record details.
 
 public class TransactionService {
     private int ID;
@@ -18,7 +25,6 @@ public class TransactionService {
     private String dateStr;
     private Scanner sc;
 
-    // private BudgetService bgtService;
     private static HashMap<Integer, Income> incomeTracker = new HashMap<>();
     private static HashMap<Integer, Expense> expenseTracker = new HashMap<>();
 
@@ -37,16 +43,20 @@ public class TransactionService {
         this.ID = getUniqueID();
         System.out.print("Amount : ");
         this.amount = InputValidator.getValidDouble(sc);
-        if (amount == 0) {
-            throw new InvalidAmountException("Can't ProCategoryExpenseServices this Ammount");
-        }
-        sc.nextLine();
+        if (Double.isNaN(amount) || !Double.isFinite(amount))
+            throw new InvalidAmountException("Please Enter Valid Digit for Amount!");
         System.out.print("Notes : ");
         this.note = sc.nextLine();
         System.out.print("Date (yyyy-mm-dd) : ");
         this.dateStr = sc.nextLine();
         if (!DateUtil.isValidDate(dateStr)) {
-            this.dateStr = LocalDate.now().toString();
+            System.out.println(": Date Format as -> yyyy-mm-dd ");
+            System.out.print("Enter again : ");
+            this.dateStr = sc.nextLine();
+            if (!DateUtil.isValidDate(dateStr)) {
+                System.out.println(":  Initializing with Today's Date, You can Change it Later");
+                this.dateStr = LocalDate.now().toString();
+            }
         }
     }
 
@@ -58,14 +68,14 @@ public class TransactionService {
     }
 
     private String categoryValidator(String category) {
+        category = Category.normalize(category);
         if (NullPointerHandler.perform(category).equalsIgnoreCase("N/A"))
             return "Other";
         else if (!Category.isExist(category)) {
             System.out.println("This Category is not a valid Category!");
             System.out.println("Wan'na make a new Category ? [y/n] : ");
             String respond = sc.next();
-            if (respond.equalsIgnoreCase("y")) {
-                Category.addCategory(category);
+            if (respond.equalsIgnoreCase("y") && Category.addCategory(category)) {
                 return category;
             } else {
                 System.out.println("Fall-back : 'Other' ");
@@ -80,44 +90,27 @@ public class TransactionService {
         System.out.println("Avilable Category " + Category.getAllCategorys());
         System.out.print("Category : ");
         this.category = categoryValidator(sc.nextLine());
+        amount = Math.abs(amount) * -1; // Ensure Negative
         expenseTracker.put(ID, new Expense(ID, amount, category, dateStr, note));
         CategoryExpenseService.incrimentCategoryExpense(category, amount);
-        // bgtService.updateIncrimentExpense(category, amount);
     }
 
-    public void getIncomeRecords() {
+    public void showIncomeRecords() {
         System.out.println("All Income Records...");
-        getRecords(RecordType.INCOME);
+        showRecords(RecordType.INCOME);
     }
 
-    public void getExpenseRecords() {
+    public void showExpenseRecords() {
         System.out.println("All Expense Records...");
-        getRecords(RecordType.EXPENSE);
+        showRecords(RecordType.EXPENSE);
     }
 
-    public void getAllRecords() {
+    public void showAllRecords() {
         System.out.println("All Income & Expense Records...");
-        getRecords(RecordType.MIXED);
+        showRecords(RecordType.MIXED);
     }
 
-    // Heavy Manupulations
-    public void deleteRecordByID(int id) throws Exception {
-        String recordRecordType = "Income";
-        if (incomeTracker.containsKey(id))
-            incomeTracker.remove(id);
-        else if (expenseTracker.containsKey(id)) {
-            recordRecordType = "Expense";
-            Expense record = expenseTracker.get(id);
-            CategoryExpenseService.decrimentCategoryExpense(record.getCategory(), record.getAmount());
-            expenseTracker.remove(id);
-        } else {
-            System.out.println("The id " + id + " is not match");
-            return;
-        }
-        System.out.println("Record has been deleted suCategoryExpenseServicesfully, from " + recordRecordType);
-    }
-
-    private void getRecords(RecordType recTyp) {
+    private void showRecords(RecordType recTyp) {
         if (recTyp == RecordType.INCOME && incomeTracker.isEmpty()) {
             System.out.println("Income Records Not Found!");
             return;
@@ -129,18 +122,18 @@ public class TransactionService {
             System.out.println("Records Not Found!");
             return;
         }
-        System.out.println(" ID       DATE         RecordType      AMOUNT    CATEGORY/SOURCE");
+        System.out.println(" ID       DATE      RecordType      AMOUNT    CATEGORY/SOURCE");
         System.out.println("------------------------------------------------------");
         if (recTyp == RecordType.INCOME || recTyp == RecordType.MIXED) {
             for (Income TRI : incomeTracker.values()) {
                 System.out.print(TRI.getID() + "   " + TRI.getDate() + "   " + RecordType.INCOME);
-                System.out.println("    " + TRI.getAmount() + "    " + TRI.getSource());
+                System.out.println("      " + TRI.getAmount() + "    " + TRI.getSource());
             }
         }
         if (recTyp == RecordType.EXPENSE || recTyp == RecordType.MIXED) {
             for (Expense TRE : expenseTracker.values()) {
                 System.out.print(TRE.getID() + "   " + TRE.getDate() + "   " + RecordType.EXPENSE);
-                System.out.println("    " + TRE.getAmount() + "    " + TRE.getCategory());
+                System.out.println("      " + TRE.getAmount() + "    " + TRE.getCategory());
             }
         }
         System.out.println("------------------------------------------------------");
@@ -167,6 +160,23 @@ public class TransactionService {
         }
     }
 
+    // Delete method for delete Record by ID
+    public void deleteRecordByID(int id) {
+        String recordRecordType = "Income";
+        if (incomeTracker.containsKey(id))
+            incomeTracker.remove(id);
+        else if (expenseTracker.containsKey(id)) {
+            recordRecordType = "Expense";
+            Expense record = expenseTracker.get(id);
+            CategoryExpenseService.decrimentCategoryExpense(record.getCategory(), record.getAmount());
+            expenseTracker.remove(id);
+        } else {
+            System.out.println("The id " + id + " is not match");
+            return;
+        }
+        System.out.println("Record has been deleted sucessfully, from " + recordRecordType);
+    }
+
     private int filedToEdit(RecordType recTyp) {
         System.out.println("What do you want to edit ? ");
         System.out.print(" 1: Amount ,2: Date, 3:Note, ");
@@ -177,7 +187,6 @@ public class TransactionService {
         System.out.println("AnyKey: Cancel");
         int option = InputValidator.getValidInt(sc);
         System.out.print("Enter ");
-        sc.nextLine();
         if (option == 1) {
             System.out.print("Amount : ");
             this.amount = InputValidator.getValidDouble(sc);
@@ -231,8 +240,7 @@ public class TransactionService {
 
                 double adjustableAmount = amount - record.getAmount();
                 String recordCategory = record.getCategory();
-                CategoryExpenseService.incrimentCategoryExpense(recordCategory, adjustableAmount); // auto
-                                                                                                   // incriment/decriment
+                CategoryExpenseService.incrimentCategoryExpense(recordCategory, adjustableAmount); // auto -/+
                 record.setAmount(amount);
             } else if (option == 2)
                 expenseTracker.get(id).setDate(dateStr);
@@ -240,25 +248,33 @@ public class TransactionService {
                 expenseTracker.get(id).setNote(note);
             else if (option == 4) {
                 Expense record = expenseTracker.get(id);
-                CategoryExpenseService.adjustBetweenCategory(record.getCategory(), category, record.getAmount());
-                record.setCategory(category);
+                if (CategoryExpenseService.adjustBetweenCategory(record.getCategory(), category, record.getAmount()))
+                    record.setCategory(category);
+                else
+                    System.out.println("Operation Failed!");
             } else
                 return;
         } else {
             System.out.println("ID not match!");
             return;
         }
-        System.out.println("ID " + id + " is Edited SuCategoryExpenseServicesfully!");
-
+        System.out.println("ID " + id + " is Edited Sucessfully!");
         searchDetailsByID(id);
     }
 
     static HashMap<Integer, Income> getAllIncomeRecords() {
-        return incomeTracker;
+        return new HashMap<>(incomeTracker);
     }
 
     static HashMap<Integer, Expense> getAllExpenseRecords() {
-        return expenseTracker;
+        return new HashMap<>(expenseTracker);
     }
 
+    public static int getIncomeCount() {
+        return incomeTracker.size();
+    }
+
+    public static int getExpenseCount() {
+        return expenseTracker.size();
+    }
 }

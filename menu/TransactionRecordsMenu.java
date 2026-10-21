@@ -3,6 +3,7 @@ package menu;
 import java.util.Scanner;
 import service.TransactionService;
 import util.InputValidator;
+import util.InvalidAmountException;
 
 public class TransactionRecordsMenu {
     public static void showMenu() {
@@ -15,17 +16,17 @@ public class TransactionRecordsMenu {
         System.out.println("6 : Back");
     }
 
-    public static void implementation(Scanner sc) throws Exception {
+    public static void implementation(Scanner sc) throws InvalidAmountException{
         TransactionService TRS = new TransactionService(sc);
         while (true) {
             System.out.print("\nChoose: ");
             int option = InputValidator.getValidInt(sc);
             if (option == 1) {
-                TRS.getIncomeRecords();
+                TRS.showIncomeRecords();
             } else if (option == 2) {
-                TRS.getExpenseRecords();
+                TRS.showExpenseRecords();
             } else if (option == 3) {
-                TRS.getAllRecords();
+                TRS.showAllRecords();
             } else if (option == 4) {
                 System.out.print("Enter ID : ");
                 int id = InputValidator.getValidInt(sc);

@@ -30,7 +30,7 @@ public class MainMenu {
         System.out.println("6 : Exit");
     }
 
-    public static void implementation(Scanner sc) throws InvalidAmountException, Exception {
+    public static void implementation(Scanner sc) throws InvalidAmountException {
         TransactionService TRS = new TransactionService(sc);
         System.out.print("\nChoose: ");
         int option = InputValidator.getValidInt(sc);

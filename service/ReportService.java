@@ -1,3 +1,4 @@
+
 package service;
 
 import model.Expense;
@@ -9,32 +10,41 @@ public class ReportService {
     private int highestIncomeId;
     private int highestExpenseId;
 
+    public ReportService() {
+        incomeCount = TransactionService.getIncomeCount();
+        expenseCount = TransactionService.getExpenseCount();
+    }
+
     public double getTotalIncomeAmount() {
         double totalIncome = 0;
+        if (incomeCount == 0)
+            return totalIncome;
+
+        double highestIncomeAmount = Double.NEGATIVE_INFINITY;
         for (Income income : TransactionService.getAllIncomeRecords().values()) {
-            double lastAmount = 0;
             double currentAmount = income.getAmount();
-            if (lastAmount <= currentAmount) {
-                lastAmount = currentAmount;
+            if (currentAmount >= highestIncomeAmount) {
+                highestIncomeAmount = currentAmount;
                 highestIncomeId = income.getID();
             }
             totalIncome += currentAmount;
-            incomeCount++;
         }
         return totalIncome;
     }
 
     public double getTotalExpenseAmount() {
         double totalExpense = 0;
+        if (expenseCount == 0)
+            return totalExpense;
+
+        double highestExpenseAmount = Double.POSITIVE_INFINITY;
         for (Expense expense : TransactionService.getAllExpenseRecords().values()) {
-            double lastAmount = 0;
             double currentAmount = expense.getAmount();
-            if (lastAmount >= currentAmount) {
-                lastAmount = currentAmount;
+            if (currentAmount <= highestExpenseAmount) {
+                highestExpenseAmount = currentAmount;
                 highestExpenseId = expense.getID();
             }
             totalExpense += expense.getAmount();
-            expenseCount++;
         }
         return totalExpense;
     }
@@ -48,25 +58,28 @@ public class ReportService {
     }
 
     public void generateReport() {
-        double income = getTotalIncomeAmount();
-        double expense = getTotalExpenseAmount();
-        if (income <= 0 && expense >= 0) {
+
+        if (incomeCount == 0.0 && expenseCount == 0.0) {
             System.out.println("There were no record");
             return;
         }
-        if (income <= 0 || expense >= 0) {
+        if (incomeCount > 0 || expenseCount > 0) {
+
+            double income = getTotalIncomeAmount();
+            double expense = getTotalExpenseAmount();
+
             System.out.println("\n------------------------------------------");
-            System.out.println("| Total Income        ->     " + income + "   |");
-            System.out.println("| Total Expence       ->    " + expense + "   |");
+            System.out.println("| Total Income  ->  " + income);
+            System.out.println("| Total Expence -> " + expense);
             System.out.println("------------------------------------------");
-            System.out.println("| Calculated Balance  ->    " + (income + expense) + "   |");
+            System.out.println("|  Cal. Balance -> " + (income + expense));
             System.out.println("------------------------------------------\n");
         }
-        if (income > 0) {
+        if (incomeCount > 0) {
             System.out.println("Highest Income : ");
             showHighestIncomeDetails();
         }
-        if (expense < 0) {
+        if (expenseCount > 0) {
             System.out.println("Highest Expense : ");
             showHighestExpenseDetails();
         }

@@ -24,7 +24,6 @@ public class BudgetRecordsMenu {
         while (true) {
             System.out.print("\nChoose: ");
             int option = InputValidator.getValidInt(sc);
-            sc.nextLine();
             if (option == 1) {
                 System.out.print("Category : ");
                 category = sc.nextLine();

@@ -17,27 +17,50 @@ public class BudgetService extends CategoryExpenseService {
     }
 
     // Category & Budget
+    // private static String categoryNormalization(String category) {
+    // return Category.normalize(category);
+    // }
+
     public boolean isCategoryExistInBudget(String category) {
-        return categoryBudget.containsKey(category);
+        return categoryBudget.containsKey(categoryNormalization(category));
     }
 
+    // Get Budget Amount for a Category | if the category is not exist in Budget,
+    // then return 0.0
     public double getCategoryBGT(String category) {
+        category = categoryNormalization(category);
         if (isCategoryExistInBudget(category))
             return categoryBudget.get(category).getBudgetAmount();
         return 0.0;
     }
 
+    private boolean createNewCategory(String category) {
+        category = categoryNormalization(category);
+        if (!Category.isExist(category)) {
+            System.out.println("This Category is not a valid Category!");
+            System.out.println("Wan'na make new Category ? [y/n] : ");
+            String respond = sc.next();
+            if (respond.equalsIgnoreCase("y")) {
+                if (Category.addCategory(category))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    // Set Budget for a Category | if the category is not exist in Budget, then
+    // create new Budget for that category
     public void setBudgetCategory(String category, double budget) throws InvalidAmountException {
+        category = categoryNormalization(category);
         if (isCategoryExistInBudget(category)) {
-            System.out.println("The category alredy exist");
+            System.out.println("The category alredy exist!");
             return;
         }
         if (!Category.isExist(category)) {
-            System.out.println("This Category is not a vlid Category!");
-            System.out.println("Wan'na make new Category ? [y/n] : ");
-            String respond = sc.next();
-            if (respond.equalsIgnoreCase("y"))
-                Category.addCategory(category);
+            if (!createNewCategory(category)) {
+                System.out.println("Unable to create Category!");
+                return;
+            }
         }
         if (!isCategoryExistInBudget(category)) {
             categoryBudget.put(category, new Budget(budget));
@@ -45,11 +68,8 @@ public class BudgetService extends CategoryExpenseService {
         }
     }
 
-    public void updateIncrimentBudget(String category) throws InvalidAmountException {
-        updateChangeBudget(category, getCategoryBGT(category) * 1.5);
-    }
-
     public void updateChangeBudget(String category, double newBudget) throws InvalidAmountException {
+        category = categoryNormalization(category);
         if (!isCategoryExistInBudget(category)) {
             System.out.println("Budget plan was not created for this Category");
         } else if (isCategoryExistInBudget(category) && getCategoryBGT(category) != newBudget) {
@@ -57,7 +77,9 @@ public class BudgetService extends CategoryExpenseService {
         }
     }
 
+    // show Budget & Expense Relation | show Remaning or Exceed Amount
     public void showBugetExpenceRelationShip(String category) {
+        category = categoryNormalization(category);
         if (isCategoryExistInBudget(category))
             showBugetExpenceRelationShip(getCategoryBGT(category), getCategoryExpense(category));
         else
@@ -73,12 +95,16 @@ public class BudgetService extends CategoryExpenseService {
         System.out.println(result);
     }
 
+    // Budget & Expense Relation | return percentage like xx.xx %
     private double getBudgetExpenseRelationInPersenteg(double budgetAmount, double expenseAmount) {
         double ret = (expenseAmount / budgetAmount) * 100;
+        ret = Math.round(ret * 100.0) / 100.0; // Round to two decimal places
         return (ret < 0) ? -ret : ret;
     }
 
+    // Show Budget & Expense Details for a specific category
     public void showCategoryBudget(String category) {
+        category = categoryNormalization(category);
         if (isCategoryExistInBudget(category)) {
             System.out.println(" CATEGORY     BUDGET    EXPENSE ");
             System.out.println("-------------------------------------------------------------");
@@ -92,6 +118,7 @@ public class BudgetService extends CategoryExpenseService {
             System.out.println("The Category \'" + category + "\' in Budget List is not exist");
     }
 
+    // Show Budget & Expense Details for all category
     public void showAllCategorysBudget() {
         if (categoryBudget.isEmpty()) {
             System.out.println("Seems there no Budget category was created");
@@ -105,13 +132,15 @@ public class BudgetService extends CategoryExpenseService {
             double bgtAmount = getCategoryBGT(category);
             double bgtExpense = getCategoryExpense(category);
             System.out.print(" " + category + "        " + bgtAmount + "        " + bgtExpense);
-            System.out.print("  (" + getBudgetExpenseRelationInPersenteg(bgtAmount, bgtExpense) + "%)  ");
+            System.out.print("    (" + getBudgetExpenseRelationInPersenteg(bgtAmount, bgtExpense) + "%)  ");
             showBugetExpenceRelationShip(bgtAmount, bgtExpense);
         }
         System.out.println("-----------------------------------------------------------------");
     }
 
+    // remove Budget Category
     public void removeBudgetCategory(String category) {
+        category = categoryNormalization(category);
         if (isCategoryExistInBudget(category)) {
             categoryBudget.remove(category);
             System.out.println("Category " + category + " is removed");
