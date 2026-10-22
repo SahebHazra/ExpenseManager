@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 import model.*;
+import storage.FileStorage;
 import util.*;
 
 // Enum to represent the type of record: INCOME, EXPENSE, or MIXED
@@ -28,8 +29,11 @@ public class TransactionService {
     private static HashMap<Integer, Income> incomeTracker = new HashMap<>();
     private static HashMap<Integer, Expense> expenseTracker = new HashMap<>();
 
+    private final FileStorage FS;
+
     public TransactionService(Scanner scanner) {
         this.sc = scanner;
+        this.FS = new FileStorage();
     }
 
     private int getUniqueID() {
@@ -46,7 +50,7 @@ public class TransactionService {
         if (Double.isNaN(amount) || !Double.isFinite(amount))
             throw new InvalidAmountException("Please Enter Valid Digit for Amount!");
         System.out.print("Notes : ");
-        this.note = sc.nextLine();
+        this.note = NullPointerHandler.perform(sc.nextLine());
         System.out.print("Date (yyyy-mm-dd) : ");
         this.dateStr = sc.nextLine();
         if (!DateUtil.isValidDate(dateStr)) {
@@ -63,13 +67,14 @@ public class TransactionService {
     public void addIncomeRecords() throws InvalidAmountException {
         takeInputs();
         System.out.print("Source : ");
-        this.source = sc.nextLine();
-        incomeTracker.put(ID, new Income(ID, amount, source, dateStr, note));
+        this.source = NullPointerHandler.perform(sc.nextLine());
+        incomeTracker.put(ID, new Income(ID, amount, dateStr, source, note));
+        FS.addIncomeRecord(ID, amount, dateStr, source, note);
     }
 
     private String categoryValidator(String category) {
         category = Category.normalize(category);
-        if (NullPointerHandler.perform(category).equalsIgnoreCase("N/A"))
+        if (category.isEmpty() || category.equalsIgnoreCase("N/A"))
             return "Other";
         else if (!Category.isExist(category)) {
             System.out.println("This Category is not a valid Category!");
@@ -91,26 +96,42 @@ public class TransactionService {
         System.out.print("Category : ");
         this.category = categoryValidator(sc.nextLine());
         amount = Math.abs(amount) * -1; // Ensure Negative
-        expenseTracker.put(ID, new Expense(ID, amount, category, dateStr, note));
+        expenseTracker.put(ID, new Expense(ID, amount, dateStr, category, note));
         CategoryExpenseService.incrimentCategoryExpense(category, amount);
+        FS.addExpenseRecord(ID, amount, dateStr, category, note);
     }
 
     public void showIncomeRecords() {
         System.out.println("All Income Records...");
-        showRecords(RecordType.INCOME);
+        // showRecordsFromMap(RecordType.INCOME);
+
+        System.out.println(" ID        AMOUNT       DATE        SOURCE      NOTE");
+        System.out.println("------------------------------------------------------");
+        FS.getAllIncomeRecords();
+        System.out.println("------------------------------------------------------");
+        System.out.println("Total Income Records : " + FS.getIncomeCount());
     }
 
     public void showExpenseRecords() {
-        System.out.println("All Expense Records...");
-        showRecords(RecordType.EXPENSE);
+        // System.out.println("All Expense Records...");
+        // showRecordsFromMap(RecordType.EXPENSE);
+
+        System.out.println(" ID        AMOUNT       DATE        CATEGORY     NOTE");
+        System.out.println("------------------------------------------------------");
+        FS.getAllExpenseRecords();
+        System.out.println("------------------------------------------------------");
+        System.out.println("Total Expense Records : " + FS.getExpenseCount());
     }
 
     public void showAllRecords() {
         System.out.println("All Income & Expense Records...");
-        showRecords(RecordType.MIXED);
+        // showRecordsFromMap(RecordType.MIXED);
+        showIncomeRecords();
+        System.out.println();
+        showExpenseRecords();
     }
 
-    private void showRecords(RecordType recTyp) {
+    private void showRecordsFromMap(RecordType recTyp) {
         if (recTyp == RecordType.INCOME && incomeTracker.isEmpty()) {
             System.out.println("Income Records Not Found!");
             return;

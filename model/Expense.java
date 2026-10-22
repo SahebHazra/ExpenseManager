@@ -7,7 +7,7 @@ public class Expense extends Transaction {
 
     private String category;
 
-    public Expense(int ID, double amount, String category, String date, String note)
+    public Expense(int ID, double amount, String date,String category,String note)
             throws InvalidAmountException {
         super(ID, amount, date, note);
         setCategory(category);
