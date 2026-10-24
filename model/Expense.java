@@ -7,14 +7,14 @@ public class Expense extends Transaction {
 
     private String category;
 
-    public Expense(int ID, double amount, String date,String category,String note)
+    public Expense(int ID, double amount, String date, String category, String note)
             throws InvalidAmountException {
         super(ID, amount, date, note);
         setCategory(category);
     }
 
     @Override
-    public void setAmount(double amount) throws InvalidAmountException {
+    public void setAmount(Double amount) throws InvalidAmountException {
         amount = Math.abs(amount) * -1; // Ensure the amount is negative
         super.setAmount(amount);
     }
