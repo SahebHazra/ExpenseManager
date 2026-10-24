@@ -16,11 +16,13 @@ public class FileStorage {
     private final String expenseCountFile;
     private final String incomeRecordsFile;
     private final String expenseRecordsFile;
+    private final String ID_File;
     private final String PATH_DIR;
 
     public FileStorage() {
         PATH_DIR = "data/";
         new File(PATH_DIR).mkdir();
+        ID_File = PATH_DIR + "IdFile.txt";
         incomeCountFile = PATH_DIR + "IncomeCount.txt";
         expenseCountFile = PATH_DIR + "ExpenseCount.txt";
         incomeRecordsFile = PATH_DIR + "IncomeRecords.txt";
@@ -32,6 +34,26 @@ public class FileStorage {
         if (!file.exists())
             file.createNewFile();
         return file;
+    }
+
+    // incriment and return unique id | start's from 101; | if failed return -1;
+    public int IncrimentAndGetID() {
+        int id = 100;
+        try {
+            File file = tryToCreateFile(ID_File);
+            try (Scanner fileScanner = new Scanner(file)) {
+                if (fileScanner.hasNextInt())
+                    id = fileScanner.nextInt();
+                try (FileWriter fileWriter = new FileWriter(file, false)) {
+                    id++;
+                    fileWriter.write(String.valueOf(id));
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+            id = -1;
+        }
+        return id;
     }
 
     // incriments only count
@@ -175,7 +197,7 @@ public class FileStorage {
 
     // remove targeted record
     public boolean removeIncomeRecord(int id) {
-       return removeRecordsForMatchedField(id, incomeRecordsFile);
+        return removeRecordsForMatchedField(id, incomeRecordsFile);
     }
 
     public boolean removeExpenseRecord(int id) {

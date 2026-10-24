@@ -37,10 +37,10 @@ public class TransactionService {
     }
 
     private int getUniqueID() {
-        ID = UniqueID.getID();
-        while (!(ID > 0) || incomeTracker.containsKey(ID) || expenseTracker.containsKey(ID))
-            ID = UniqueID.getID();
-        return ID;
+       int localID = FS.IncrimentAndGetID();
+        while ((localID == -1) || incomeTracker.containsKey(localID) || expenseTracker.containsKey(localID))
+            localID = UniqueID.getID();
+        return localID;
     }
 
     private void takeInputs() throws InvalidAmountException {
