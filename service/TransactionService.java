@@ -105,7 +105,7 @@ public class TransactionService {
         System.out.println("All Income Records...");
         // showRecordsFromMap(RecordType.INCOME);
 
-        System.out.println(" ID        AMOUNT       DATE        SOURCE      NOTE");
+        System.out.println(" ID        AMOUNT       DATE       SOURCE    NOTE");
         System.out.println("------------------------------------------------------");
         FS.getAllIncomeRecords();
         System.out.println("------------------------------------------------------");
