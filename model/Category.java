@@ -7,7 +7,7 @@ abstract public class Category {
 
     private static final HashSet<String> types = new HashSet<>(
             List.of("Food", "Transport", "Education", "Entertainment",
-                    "Shopping", "Shopping", "Bills", "Health", "Technology", "Other"));
+                    "Shopping", "Bills", "Health", "Technology", "Other"));
 
     public static boolean isExist(String category) {
         category = normalize(category);
@@ -21,7 +21,7 @@ abstract public class Category {
         if (str == null || str.isEmpty() || str.isBlank())
             return "";
         str = str.strip();
-        String startStr = str.substring(0,1);
+        String startStr = str.substring(0, 1);
         String remnStr = str.substring(1);
         // if (startStr == startStr.toUpperCase() && remnStr == remnStr.toLowerCase()){
         // return str; }

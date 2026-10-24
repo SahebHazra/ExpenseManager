@@ -3,7 +3,6 @@ package util;
 import java.util.Scanner;
 
 public class InputValidator {
-
     public static int getValidInt(Scanner sc) {
         while (true) {
             try {
@@ -13,15 +12,17 @@ public class InputValidator {
                 System.out.println("Invalid input. Please enter a valid integer.");
                 System.out.print("Enter again: ");
             }
-
         }
     }
 
     public static Double getValidDouble(Scanner sc) {
         while (true) {
             try {
-                double validNum = Double.parseDouble(sc.nextLine());
-                return validNum;
+                Double validNum = Double.parseDouble(sc.nextLine());
+                if (!validNum.isNaN() && !validNum.isInfinite())
+                    return validNum;
+                // else
+                //     validNum = (double) 1 / 0; // try to violate for nan/infinite
             } catch (NumberFormatException e) {
                 System.out.println("Invalid input. Please enter a valid double.");
                 System.out.print("Enter again: ");

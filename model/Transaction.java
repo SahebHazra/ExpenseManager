@@ -24,9 +24,11 @@ abstract public class Transaction {
         this.ID = ID;
     }
 
-    public void setAmount(double amount) throws InvalidAmountException {
-        if (amount == 0)
-            throw new InvalidAmountException("Amount Should not be Zero");
+    public void setAmount(Double amount) throws InvalidAmountException {
+        if (amount.isNaN() || amount.isInfinite())
+            throw new InvalidAmountException("This is an Invalid Amount!");
+        else if (amount == 0)
+            throw new InvalidAmountException("Amount Should not be Zero!");
         this.amount = amount;
     }
 
