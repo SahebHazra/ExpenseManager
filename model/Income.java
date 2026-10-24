@@ -14,7 +14,7 @@ public class Income extends Transaction {
     }
 
     @Override
-    public void setAmount(double amount) throws InvalidAmountException {
+    public void setAmount(Double amount) throws InvalidAmountException {
         if (amount < 0)
             throw new InvalidAmountException("Income Should in Positive");
         super.setAmount(amount);

@@ -14,7 +14,7 @@ public class Expense extends Transaction {
     }
 
     @Override
-    public void setAmount(double amount) throws InvalidAmountException {
+    public void setAmount(Double amount) throws InvalidAmountException {
         amount = Math.abs(amount) * -1; // Ensure the amount is negative
         super.setAmount(amount);
     }
