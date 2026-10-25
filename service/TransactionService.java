@@ -76,8 +76,9 @@ public class TransactionService {
         this.ID = getUniqueID();
         System.out.print("Amount : ");
         this.amount = InputValidator.getValidDouble(sc);
-        if (Double.isNaN(amount) || !Double.isFinite(amount))
+        if (!Double.isFinite(amount))
             throw new InvalidAmountException("Please Enter Valid Digit for Amount!");
+        sc.nextLine(); // consume the newline left by next()
         System.out.print("Notes : ");
         this.note = NullPointerHandler.perform(sc.nextLine());
         System.out.print("Date (yyyy-mm-dd) : ");
@@ -250,6 +251,7 @@ public class TransactionService {
             System.out.println("4:Category ");
         System.out.println("AnyKey: Cancel");
         int option = InputValidator.getValidInt(sc);
+        sc.nextLine(); // consume the newline left by next()
         System.out.print("Enter ");
         if (option == 1) {
             System.out.print("Amount : ");
