@@ -19,10 +19,9 @@ public class InputValidator {
         while (true) {
             try {
                 Double validNum = Double.parseDouble(sc.nextLine());
-                if (!validNum.isNaN() && !validNum.isInfinite())
-                    return validNum;
-                // else
-                //     validNum = (double) 1 / 0; // try to violate for nan/infinite
+                if (validNum.isNaN() || validNum.isInfinite())
+                    validNum = Double.parseDouble("invalid");
+                return validNum;
             } catch (NumberFormatException e) {
                 System.out.println("Invalid input. Please enter a valid double.");
                 System.out.print("Enter again: ");
