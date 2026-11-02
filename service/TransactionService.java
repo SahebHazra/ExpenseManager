@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 import model.*;
+import storage.FileStorage;
 import util.*;
 
 // Enum to represent the type of record: INCOME, EXPENSE, or MIXED
@@ -28,25 +29,58 @@ public class TransactionService {
     private static HashMap<Integer, Income> incomeTracker = new HashMap<>();
     private static HashMap<Integer, Expense> expenseTracker = new HashMap<>();
 
+    private final FileStorage FS;
+    private static boolean recordsLoaded = false;
+
     public TransactionService(Scanner scanner) {
         this.sc = scanner;
+        this.FS = new FileStorage();
+        loadPersistedRecords();
+    }
+
+    private void loadPersistedRecords() {
+        if (recordsLoaded) return;
+        for (String[] row : FS.loadIncomeRecords()) {
+            try {
+                int id = Integer.parseInt(row[0]);
+                double amount = Double.parseDouble(row[1]);
+                incomeTracker.put(id, new Income(id, amount, row[2], row[3], row[4]));
+            } catch (Exception e) {
+                System.out.println("Skipping invalid income record: " + e.getMessage());
+            }
+        }
+        for (String[] row : FS.loadExpenseRecords()) {
+            try {
+                int id = Integer.parseInt(row[0]);
+                double amount = Double.parseDouble(row[1]);
+                String category = Category.normalize(row[3]);
+                if (!Category.isExist(category)) Category.addCategory(category);
+                Expense expense = new Expense(id, amount, row[2], category, row[4]);
+                expenseTracker.put(id, expense);
+                CategoryExpenseService.incrimentCategoryExpense(category, expense.getAmount());
+            } catch (Exception e) {
+                System.out.println("Skipping invalid expense record: " + e.getMessage());
+            }
+        }
+        recordsLoaded = true;
     }
 
     private int getUniqueID() {
-        ID = UniqueID.getID();
-        while (!(ID > 0) || incomeTracker.containsKey(ID) || expenseTracker.containsKey(ID))
-            ID = UniqueID.getID();
-        return ID;
+       int localID = FS.IncrimentAndGetID();
+        while ((localID == -1) || incomeTracker.containsKey(localID) || expenseTracker.containsKey(localID))
+            localID = UniqueID.getID();
+        return localID;
     }
 
     private void takeInputs() throws InvalidAmountException {
         this.ID = getUniqueID();
         System.out.print("Amount : ");
         this.amount = InputValidator.getValidDouble(sc);
-        if (Double.isNaN(amount) || !Double.isFinite(amount))
+        if (!Double.isFinite(amount))
             throw new InvalidAmountException("Please Enter Valid Digit for Amount!");
+        sc.nextLine(); // consume the newline left by next()
         System.out.print("Notes : ");
-        this.note = sc.nextLine();
+        this.note = NullPointerHandler.perform(sc.nextLine());
         System.out.print("Date (yyyy-mm-dd) : ");
         this.dateStr = sc.nextLine();
         if (!DateUtil.isValidDate(dateStr)) {
@@ -63,13 +97,17 @@ public class TransactionService {
     public void addIncomeRecords() throws InvalidAmountException {
         takeInputs();
         System.out.print("Source : ");
-        this.source = sc.nextLine();
-        incomeTracker.put(ID, new Income(ID, amount, source, dateStr, note));
+        this.source = NullPointerHandler.perform(sc.nextLine());
+        if (!FS.addIncomeRecord(ID, amount, dateStr, source, note)) {
+            System.out.println("Could not save income record. No changes were made.");
+            return;
+        }
+        incomeTracker.put(ID, new Income(ID, amount, dateStr, source, note));
     }
 
     private String categoryValidator(String category) {
         category = Category.normalize(category);
-        if (NullPointerHandler.perform(category).equalsIgnoreCase("N/A"))
+        if (category.isEmpty() || category.equalsIgnoreCase("N/A"))
             return "Other";
         else if (!Category.isExist(category)) {
             System.out.println("This Category is not a valid Category!");
@@ -91,26 +129,45 @@ public class TransactionService {
         System.out.print("Category : ");
         this.category = categoryValidator(sc.nextLine());
         amount = Math.abs(amount) * -1; // Ensure Negative
-        expenseTracker.put(ID, new Expense(ID, amount, category, dateStr, note));
+        if (!FS.addExpenseRecord(ID, amount, dateStr, category, note)) {
+            System.out.println("Could not save expense record. No changes were made.");
+            return;
+        }
+        expenseTracker.put(ID, new Expense(ID, amount, dateStr, category, note));
         CategoryExpenseService.incrimentCategoryExpense(category, amount);
     }
 
     public void showIncomeRecords() {
         System.out.println("All Income Records...");
-        showRecords(RecordType.INCOME);
+        // showRecordsFromMap(RecordType.INCOME);
+
+        System.out.println(" ID        AMOUNT       DATE       SOURCE    NOTE");
+        System.out.println("------------------------------------------------------");
+        FS.getAllIncomeRecords();
+        System.out.println("------------------------------------------------------");
+        System.out.println("Total Income Records : " + FS.getIncomeCount());
     }
 
     public void showExpenseRecords() {
-        System.out.println("All Expense Records...");
-        showRecords(RecordType.EXPENSE);
+        // System.out.println("All Expense Records...");
+        // showRecordsFromMap(RecordType.EXPENSE);
+
+        System.out.println(" ID        AMOUNT       DATE        CATEGORY     NOTE");
+        System.out.println("------------------------------------------------------");
+        FS.getAllExpenseRecords();
+        System.out.println("------------------------------------------------------");
+        System.out.println("Total Expense Records : " + FS.getExpenseCount());
     }
 
     public void showAllRecords() {
         System.out.println("All Income & Expense Records...");
-        showRecords(RecordType.MIXED);
+        // showRecordsFromMap(RecordType.MIXED);
+        showIncomeRecords();
+        System.out.println();
+        showExpenseRecords();
     }
 
-    private void showRecords(RecordType recTyp) {
+    private void showRecordsFromMap(RecordType recTyp) {
         if (recTyp == RecordType.INCOME && incomeTracker.isEmpty()) {
             System.out.println("Income Records Not Found!");
             return;
@@ -163,11 +220,19 @@ public class TransactionService {
     // Delete method for delete Record by ID
     public void deleteRecordByID(int id) {
         String recordRecordType = "Income";
-        if (incomeTracker.containsKey(id))
+        if (incomeTracker.containsKey(id)) {
+            if (!FS.removeIncomeRecord(id)) {
+                System.out.println("Could not delete income record from storage.");
+                return;
+            }
             incomeTracker.remove(id);
-        else if (expenseTracker.containsKey(id)) {
+        } else if (expenseTracker.containsKey(id)) {
             recordRecordType = "Expense";
             Expense record = expenseTracker.get(id);
+            if (!FS.removeExpenseRecord(id)) {
+                System.out.println("Could not delete expense record from storage.");
+                return;
+            }
             CategoryExpenseService.decrimentCategoryExpense(record.getCategory(), record.getAmount());
             expenseTracker.remove(id);
         } else {
@@ -186,6 +251,7 @@ public class TransactionService {
             System.out.println("4:Category ");
         System.out.println("AnyKey: Cancel");
         int option = InputValidator.getValidInt(sc);
+        sc.nextLine(); // consume the newline left by next()
         System.out.print("Enter ");
         if (option == 1) {
             System.out.print("Amount : ");
@@ -256,6 +322,18 @@ public class TransactionService {
                 return;
         } else {
             System.out.println("ID not match!");
+            return;
+        }
+        boolean saved;
+        if (incomeTracker.containsKey(id)) {
+            Income r = incomeTracker.get(id);
+            saved = FS.updateIncomeRecord(id, r.getAmount(), r.getDate().toString(), r.getSource(), r.getNote());
+        } else {
+            Expense r = expenseTracker.get(id);
+            saved = FS.updateExpenseRecord(id, r.getAmount(), r.getDate().toString(), r.getCategory(), r.getNote());
+        }
+        if (!saved) {
+            System.out.println("Warning: record changed in memory but could not be saved to disk.");
             return;
         }
         System.out.println("ID " + id + " is Edited Sucessfully!");

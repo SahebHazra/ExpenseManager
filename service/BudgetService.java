@@ -6,14 +6,40 @@ import java.util.Scanner;
 
 import model.*;
 import util.InvalidAmountException;
+import storage.BudgetStorage;
+import java.util.Map;
 
 public class BudgetService extends CategoryExpenseService {
     private Scanner sc;
 
     private static HashMap<String, Budget> categoryBudget = new HashMap<>();
+    private static final BudgetStorage budgetStorage = new BudgetStorage();
+    private static boolean budgetsLoaded = false;
+
+    private static void loadBudgets() {
+        if (budgetsLoaded) return;
+        for (Map.Entry<String, Double> entry : budgetStorage.loadAll().entrySet()) {
+            try {
+                String category = Category.normalize(entry.getKey());
+                if (!Category.isExist(category)) Category.addCategory(category);
+                categoryBudget.put(category, new Budget(entry.getValue()));
+            } catch (InvalidAmountException e) {
+                System.out.println("Skipping invalid saved budget: " + e.getMessage());
+            }
+        }
+        budgetsLoaded = true;
+    }
+
+    private static boolean saveBudgets() {
+        HashMap<String, Double> saved = new HashMap<>();
+        for (Map.Entry<String, Budget> entry : categoryBudget.entrySet())
+            saved.put(entry.getKey(), entry.getValue().getBudgetAmount());
+        return budgetStorage.saveAll(saved);
+    }
 
     public BudgetService(Scanner scanner) {
         sc = scanner;
+        loadBudgets();
     }
 
     // Category & Budget
@@ -64,6 +90,7 @@ public class BudgetService extends CategoryExpenseService {
         }
         if (!isCategoryExistInBudget(category)) {
             categoryBudget.put(category, new Budget(budget));
+            if (!saveBudgets()) System.out.println("Warning: budget was created in memory but could not be saved.");
             System.out.println("The category : \'" + category + "\' is Initialized");
         }
     }
@@ -74,6 +101,7 @@ public class BudgetService extends CategoryExpenseService {
             System.out.println("Budget plan was not created for this Category");
         } else if (isCategoryExistInBudget(category) && getCategoryBGT(category) != newBudget) {
             categoryBudget.get(category).setBudgetAmount(newBudget);
+            if (!saveBudgets()) System.out.println("Warning: budget changed in memory but could not be saved.");
         }
     }
 
@@ -143,6 +171,7 @@ public class BudgetService extends CategoryExpenseService {
         category = categoryNormalization(category);
         if (isCategoryExistInBudget(category)) {
             categoryBudget.remove(category);
+            if (!saveBudgets()) System.out.println("Warning: budget removed in memory but could not be saved.");
             System.out.println("Category " + category + " is removed");
         } else
             System.out.println("The Budget Category is Not exist");
